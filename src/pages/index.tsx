@@ -1,86 +1,65 @@
-import { Geist } from "next/font/google";
+import { useCollab } from "@/hooks/useCollabContext";
 import { useRouter } from "next/router";
 import { useState } from "react";
 import { io } from "socket.io-client";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
+export const socket = io("http://localhost:8080");
 export default function Home() {
-  const socket = io("http://localhost:8080");
-
   const router = useRouter();
-  const { sessionId } = router.query;
 
-  const [sessionInput, setSessionInput] = useState("");
+  const { setCollabName } = useCollab();
 
-  const updateSessionId = (id: string | undefined) => {
-    const query = { ...router.query, sessionId: id };
-
-    router.push({ pathname: router.pathname, query }, undefined, {
-      shallow: true,
-    });
-  };
+  const [sessionId, setSessionId] = useState("");
 
   const joinSession = () => {
-    socket.emit(
-      "join room",
-      { roomId: sessionInput },
-      ({ success, roomId }: { success: boolean; roomId: string }) => {
-        if (success) {
-          updateSessionId(roomId);
-        }
-      }
-    );
+    router.push(`/session/${sessionId}`);
   };
+
+  type SuccessResponse = { success: true; collabId: string; name: string };
+  type ErrorResponse = { success: false; message: string };
 
   const createSession = () => {
     socket.emit(
-      "createRoom",
-      ({ success, roomId }: { success: boolean; roomId: string }) => {
-        if (success) {
-          updateSessionId(roomId);
+      "create room",
+      (props: SuccessResponse | ErrorResponse) => {        
+        if (props.success) {
+          setCollabName(props.name)
+          router.push(`/session/${props.collabId}`);
+        } else {
+          console.log(props.message);
         }
       }
     );
   };
 
   return (
-    <div
-      className={`${geistSans.variable} flex items-center justify-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
-    >
-      <main className="flex flex-col gap-8">
-        <h1>Prompt Together</h1>
-        {sessionId ? (
-          <div>Your session is {sessionId}</div>
-        ) : (
-          <>
-            <button
-              className="text-white border-white border-2 rounded-md p-4"
-              onClick={createSession}
-            >
-              Start session
-            </button>
-
-            <div>
-              <input
-                type="text"
-                placeholder="Enter session id"
-                value={sessionInput}
-                onChange={(e) => setSessionInput(e.target.value.trim())}
-                className="text-black w-40 p-2 rounded-md"
-              />
-              <button
-                className="text-white border-white border-2 rounded-md p-4"
-                onClick={joinSession}
-              >
-                Join session
-              </button>
-            </div>
-          </>
-        )}
+    <div className="w-full h-screen">
+      <main className="flex flex-col gap-8 justify-center items-center h-screen text-white text-lg">
+        <button
+          className="py-4 px-3 rounded-md border-white border-2 cursor-pointer"
+          onClick={createSession}
+        >
+          Create Session
+        </button>
+        <div className="flex gap-6 items-center">
+          <input
+            className="text-black text-lg p-4 rounded-md bg-white"
+            type="text"
+            value={sessionId}
+            onChange={(e) => setSessionId(e.target.value.trim())}
+          />
+          <button
+            className={`py-4 px-3 rounded-md border-2 ${
+              !sessionId
+                ? "border-slate-500 text-slate-500"
+                : "border-white cursor-pointer"
+            }`}
+            onClick={joinSession}
+            disabled={!sessionId}
+          >
+            Join Session
+          </button>
+        </div>
       </main>
     </div>
   );
