@@ -12,10 +12,17 @@ const InputDialogComponent: ForwardRefRenderFunction<
   HTMLDialogElement,
   InputDialogProps
 > = (props, ref) => {
-  const { title, inputPlaceholderText, suggestion, minLength, onSubmit } =
-    props;
+  const {
+    title,
+    inputPlaceholderText,
+    suggestion,
+    minLength = 3,
+    onSubmit,
+  } = props;
 
   const [value, setValue] = useState("");
+
+  const isJoinDisabled = value.length < minLength;
 
   return (
     <dialog
@@ -44,11 +51,11 @@ const InputDialogComponent: ForwardRefRenderFunction<
         <button
           type="submit"
           className={`self-end border-2 py-1 px-3 rounded-md ${
-            !value
+            isJoinDisabled
               ? "border-slate-600 cursor-pointer text-slate-600"
               : "border-white"
           }`}
-          disabled={!value}
+          disabled={isJoinDisabled}
         >
           Join
         </button>
