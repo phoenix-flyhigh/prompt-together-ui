@@ -30,6 +30,7 @@ export default function Session({ sessionId }: { sessionId?: string }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [inputText, setInputText] = useState("");
   const [messages, setMessages] = useState<TMessage[]>([]);
+  const [typingUsers, setTypingUsers] = useState<string[]>([]);
 
   useEffect(() => {
     if (!username) {
@@ -90,9 +91,13 @@ export default function Session({ sessionId }: { sessionId?: string }) {
         { message, byUser, username },
       ]);
     });
+    socket.on("typing", ({ users }) => {
+      setTypingUsers(users);
+    });
 
     return () => {
       socket.off("new message");
+      socket.off("typing");
     };
   }, []);
 
@@ -131,14 +136,27 @@ export default function Session({ sessionId }: { sessionId?: string }) {
           )
         )}
 
-        <textarea
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          className="w-full border-2 border-white p-4 text-md bg-slate-800 rounded-lg"
-          placeholder="Enter your prompt"
-          rows={4}
-          maxLength={700}
-        />
+        <div className="flex flex-col gap-2 items-start w-full">
+          <textarea
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            className="w-full border-2 border-white p-4 text-md bg-slate-800 rounded-lg"
+            placeholder="Enter your prompt"
+            rows={4}
+            maxLength={700}
+            onFocus={() =>
+              socket.emit("started typing", { username, collabId })
+            }
+            onBlur={() => socket.emit("stopped typing", { username, collabId })}
+          />
+          {typingUsers.length > 0 && (
+            <p className="text-sm font-semibold text-slate-400">
+              {`${typingUsers.join(", ")} ${
+                typingUsers.length > 1 ? "" : "is"
+              } typing...`}
+            </p>
+          )}
+        </div>
 
         <button
           className={`border-2 ${
