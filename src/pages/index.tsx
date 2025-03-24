@@ -1,6 +1,6 @@
 import { useCollab } from "@/hooks/useCollabContext";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import {type FormEvent, useState } from "react";
 import { io } from "socket.io-client";
 
 export const socket = io("http://localhost:8080");
@@ -11,7 +11,8 @@ export default function Home() {
 
   const [sessionId, setSessionId] = useState("");
 
-  const joinSession = () => {
+  const joinSession = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
     router.push(`/session/${sessionId}`);
   };
 
@@ -41,7 +42,10 @@ export default function Home() {
         >
           Create Session
         </button>
-        <div className="flex gap-6 items-center">
+        <br/>
+        <p>OR</p>
+        <br/>
+        <form className="flex gap-6 items-center" onSubmit={joinSession}>
           <input
             className="text-black text-lg p-4 rounded-md bg-white"
             type="text"
@@ -54,12 +58,12 @@ export default function Home() {
                 ? "border-slate-500 text-slate-500"
                 : "border-white cursor-pointer"
             }`}
-            onClick={joinSession}
+            type="submit"
             disabled={!sessionId}
           >
             Join Session
           </button>
-        </div>
+        </form>
       </main>
     </div>
   );
