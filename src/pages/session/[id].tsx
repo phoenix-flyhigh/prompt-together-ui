@@ -29,10 +29,14 @@ export default function Session({ sessionId }: { sessionId?: string }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(false);
   const [askingAI, setAskingAI] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [allUsers, setAllUsers] = useState<string[]>([]);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [inputText, setInputText] = useState("");
   const [messages, setMessages] = useState<TMessage[]>([]);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
+
+  const dropdownRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
     if (!username) {
@@ -52,19 +56,22 @@ export default function Session({ sessionId }: { sessionId?: string }) {
         message,
         name,
         allMessages,
+        members,
       }: {
         success: boolean;
         message: string;
         name: string;
         allMessages: TMessage[];
+        members: string[];
       }) => {
         if (success) {
           setCollabName(name);
           setMessages(allMessages);
           setIsLoading(false);
+          setAllUsers(members);
         } else {
           console.log(message);
-
+          setUsername("");
           router.replace("/");
         }
       }
@@ -130,17 +137,37 @@ export default function Session({ sessionId }: { sessionId?: string }) {
       setTypingUsers(users);
     });
 
-    socket.on("disconnect", () => {
-      console.log("left room");
+    socket.on("user joined", ({ username, members }) => {
+      console.log("New user has joined", username);
 
+      setAllUsers(members);
+    });
+
+    socket.on("disconnect", () => {
+      setUsername("");
       router.push("/");
     });
+
+    const outsideClickHandler = (e: MouseEvent) => {
+      if (!showDropdown) return;
+
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener("click", outsideClickHandler);
 
     return () => {
       socket.off("new message");
       socket.off("typing");
+      socket.off("user joined");
+      document.removeEventListener("click", outsideClickHandler);
     };
-  }, []);
+  }, [setUsername, showDropdown]);
 
   if (!username) {
     return (
@@ -159,18 +186,37 @@ export default function Session({ sessionId }: { sessionId?: string }) {
   }
 
   return (
-    <div className="flex w-full justify-center">
-      <div className="flex flex-col gap-8 items-center justify-center w-full p-4 lg:w-3/4">
+    <div className="flex w-full justify-center flex-col gap-4">
+      <section className="relative flex justify-between p-4">
         <p className="text-xl font-bold">{collabName}</p>
-        <p className="text-lg">welcome , {username}</p>
-
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowDropdown((prev) => !prev);
+          }}
+        >
+          Users
+        </button>
+        {showDropdown && (
+          <ul
+            aria-label="members"
+            className="absolute right-4 top-12"
+            ref={dropdownRef}
+          >
+            {allUsers.map((user) => (
+              <li key={user}>{user}</li>
+            ))}
+          </ul>
+        )}
+      </section>
+      <div className="flex flex-col gap-8 items-center justify-center w-full p-4 lg:w-3/4">
         {messages.map((msg, i) =>
           msg.byUser ? (
             <MessageBox
               key={i}
               message={msg.message}
               byUser={msg.byUser}
-              username={msg.username}
+              username={msg.username === username ? "You" : msg.username}
             />
           ) : (
             <MessageBox key={i} message={msg.message} byUser={msg.byUser} />
