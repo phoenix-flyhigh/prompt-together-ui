@@ -24,7 +24,13 @@ export default function Session({ sessionId }: { sessionId?: string }) {
   const { id } = router.query as QueryParams;
   const collabId = id ?? sessionId;
 
-  const { collabName, username, setUsername, setCollabName } = useCollab();
+  const {
+    collabName,
+    username,
+    setUsername,
+    setCollabName,
+    setFailedToJoinMessage,
+  } = useCollab();
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -45,6 +51,7 @@ export default function Session({ sessionId }: { sessionId?: string }) {
   }, [username]);
 
   const handleDialogSubmit = (input: string) => {
+    setFailedToJoinMessage("");
     setUsername(input);
     setIsLoading(true);
 
@@ -71,6 +78,7 @@ export default function Session({ sessionId }: { sessionId?: string }) {
           setAllUsers(members);
         } else {
           console.log(message);
+          setFailedToJoinMessage(message);
           setUsername("");
           router.replace("/");
         }
