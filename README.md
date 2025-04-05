@@ -1,3 +1,17 @@
+# Steps to setup this project
+
+## UI
+
+ - Get Gemini API key
+ https://ai.google.dev/gemini-api/docs/quickstart?lang=node
+
+ - Add it to .env file 
+    ```
+    NEXT_PUBLIC_GEMINI_API_KEY=<your API key>
+    ```
+
+# Next JS
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
 
 ## Getting Started
