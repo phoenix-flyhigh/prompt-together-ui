@@ -27,6 +27,8 @@ export default function Session({ sessionId }: { sessionId?: string }) {
   const { collabName, username, setUsername, setCollabName } = useCollab();
 
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const [askingAI, setAskingAI] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [inputText, setInputText] = useState("");
   const [messages, setMessages] = useState<TMessage[]>([]);
@@ -40,6 +42,7 @@ export default function Session({ sessionId }: { sessionId?: string }) {
 
   const handleDialogSubmit = (input: string) => {
     setUsername(input);
+    setIsLoading(true);
 
     socket.emit(
       "join room",
@@ -68,12 +71,33 @@ export default function Session({ sessionId }: { sessionId?: string }) {
     );
   };
 
-  const handleSubmit = () => {
-    setMessages((prev) => [
-      ...prev,
-      { message: inputText, byUser: true, username },
-    ]);
+  const askAI = async () => {
+    if (!inputText) return;
 
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: inputText }),
+    });
+
+    const data = await res.json();
+    console.log("received", data);
+
+    if (!data) {
+      setError(true);
+      return;
+    }
+
+    socket.emit("add message", {
+      message: data.response,
+      byUser: false,
+      collabId,
+      username: "AI",
+    });
+  };
+
+  const handleSubmit = async () => {
+    setError(false);
     socket.emit("add message", {
       message: inputText,
       byUser: true,
@@ -81,7 +105,18 @@ export default function Session({ sessionId }: { sessionId?: string }) {
       username,
     });
 
-    setInputText("");
+    try {
+      setAskingAI(true);
+      await askAI();
+      setInputText("");
+      setMessages((prev) => [
+        ...prev,
+        { message: inputText, byUser: true, username },
+      ]);
+      setAskingAI(false);
+    } catch (e) {
+      console.error("error occured", e);
+    }
   };
 
   useEffect(() => {
@@ -93,6 +128,12 @@ export default function Session({ sessionId }: { sessionId?: string }) {
     });
     socket.on("typing", ({ users }) => {
       setTypingUsers(users);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("left room");
+
+      router.push("/");
     });
 
     return () => {
@@ -158,17 +199,20 @@ export default function Session({ sessionId }: { sessionId?: string }) {
           )}
         </div>
 
-        <button
-          className={`border-2 ${
-            !inputText
-              ? "border-slate-600 text-slate-600"
-              : "border-white cursor-pointer"
-          } px-4 py-2 `}
-          disabled={!inputText}
-          onClick={handleSubmit}
-        >
-          Ask AI
-        </button>
+        <div className="flex flex-col gap-4 items-center">
+          <button
+            className={`border-2 ${
+              !inputText
+                ? "border-slate-600 text-slate-600"
+                : "border-white cursor-pointer"
+            } px-4 py-2 w-fit`}
+            disabled={!inputText || askingAI}
+            onClick={handleSubmit}
+          >
+            Ask AI
+          </button>
+          {error && <p>Failed to get AI response, Please try again!</p>}
+        </div>
       </div>
     </div>
   );
