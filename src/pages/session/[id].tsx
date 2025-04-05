@@ -34,6 +34,7 @@ export default function Session({ sessionId }: { sessionId?: string }) {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [failedToSendMessage, setFailedToSendMessage] = useState(false);
   const [askingAI, setAskingAI] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [allUsers, setAllUsers] = useState<string[]>([]);
@@ -87,12 +88,18 @@ export default function Session({ sessionId }: { sessionId?: string }) {
   };
 
   const askAI = async () => {
-    if (!inputText) return;
+    setError(false);
+    setAskingAI(true);
 
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: inputText }),
+      body: JSON.stringify({
+        prompt: messages.reduce(
+          (acc, msg) => (msg.byUser ? (acc += ` ${msg.message}`) : acc),
+          ""
+        ),
+      }),
     });
 
     const data = await res.json();
@@ -103,35 +110,45 @@ export default function Session({ sessionId }: { sessionId?: string }) {
       return;
     }
 
-    socket.emit("add message", {
-      message: data.response,
-      byUser: false,
-      collabId,
-      username: "AI",
-    });
+    socket.emit(
+      "add message",
+      {
+        message: data.response,
+        byUser: false,
+        collabId,
+        username: "AI",
+      },
+      () => {}
+    );
+
+    setAskingAI(false);
   };
+  console.log(!messages.length && askingAI);
 
   const handleSubmit = async () => {
     setError(false);
-    socket.emit("add message", {
-      message: inputText,
-      byUser: true,
-      collabId,
-      username,
-    });
 
-    try {
-      setAskingAI(true);
-      await askAI();
-      setInputText("");
-      setMessages((prev) => [
-        ...prev,
-        { message: inputText, byUser: true, username },
-      ]);
-      setAskingAI(false);
-    } catch (e) {
-      console.error("error occured", e);
-    }
+    setFailedToSendMessage(false);
+    socket.emit(
+      "add message",
+      {
+        message: inputText,
+        byUser: true,
+        collabId,
+        username,
+      },
+      ({ success }: { success: boolean }) => {
+        if (success) {
+          setInputText("");
+          setMessages((prev) => [
+            ...prev,
+            { message: inputText, byUser: true, username },
+          ]);
+        } else {
+          setFailedToSendMessage(true);
+        }
+      }
+    );
   };
 
   useEffect(() => {
@@ -176,6 +193,8 @@ export default function Session({ sessionId }: { sessionId?: string }) {
       document.removeEventListener("click", outsideClickHandler);
     };
   }, [setUsername, showDropdown]);
+
+  const enableAI = messages.length && !askingAI;
 
   if (!username) {
     return (
@@ -232,18 +251,35 @@ export default function Session({ sessionId }: { sessionId?: string }) {
         )}
 
         <div className="flex flex-col gap-2 items-start w-full">
-          <textarea
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            className="w-full border-2 border-white p-4 text-md bg-slate-800 rounded-lg"
-            placeholder="Enter your prompt"
-            rows={4}
-            maxLength={700}
-            onFocus={() =>
-              socket.emit("started typing", { username, collabId })
-            }
-            onBlur={() => socket.emit("stopped typing", { username, collabId })}
-          />
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit();
+            }}
+            className="w-full relative"
+          >
+            <textarea
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              className="w-full border-2 border-white p-4 text-md bg-slate-800 rounded-lg"
+              placeholder="Enter your prompt"
+              rows={4}
+              maxLength={700}
+              onFocus={() =>
+                socket.emit("started typing", { username, collabId })
+              }
+              onBlur={() =>
+                socket.emit("stopped typing", { username, collabId })
+              }
+            />
+            <button
+              className="absolute right-3 bottom-3 text-white"
+              type="submit"
+              disabled={!inputText}
+            >
+              Send
+            </button>
+          </form>
           {typingUsers.length > 0 && (
             <p className="text-sm font-semibold text-slate-400">
               {`${typingUsers.join(", ")} ${
@@ -251,17 +287,20 @@ export default function Session({ sessionId }: { sessionId?: string }) {
               } typing...`}
             </p>
           )}
+          {failedToSendMessage && (
+            <p>Failed to send message. Please try again!!</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-4 items-center">
           <button
             className={`border-2 ${
-              !inputText
+              !enableAI
                 ? "border-slate-600 text-slate-600"
                 : "border-white cursor-pointer"
             } px-4 py-2 w-fit`}
-            disabled={!inputText || askingAI}
-            onClick={handleSubmit}
+            disabled={!enableAI}
+            onClick={askAI}
           >
             Ask AI
           </button>
