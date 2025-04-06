@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { type FormEvent, useState } from "react";
 import { io } from "socket.io-client";
 
-export const socket = io("http://localhost:8080");
+export const socket = io(process.env.NEXT_PUBLIC_API_URL);
 export default function Home() {
   const router = useRouter();
 

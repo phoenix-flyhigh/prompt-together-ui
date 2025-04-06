@@ -302,12 +302,13 @@ export default function Session({ sessionId }: { sessionId?: string }) {
               }
             />
             <button
-              className="absolute right-3 bottom-3 text-white"
+              className="absolute right-3 bottom-8 text-white"
               type="submit"
               disabled={!inputText}
             >
               Send
             </button>
+            <p className="text-sm text-slate-400">Enter key sends the message</p>
           </form>
           {typingUsers.length > 0 && (
             <p className="text-sm font-semibold text-slate-400">
