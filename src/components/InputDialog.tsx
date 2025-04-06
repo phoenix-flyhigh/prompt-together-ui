@@ -46,6 +46,7 @@ const InputDialogComponent: ForwardRefRenderFunction<
           placeholder={inputPlaceholderText ?? ""}
           required
           min={minLength}
+          maxLength={60}
         />
         <span className="text-slate-300 text-sm">{suggestion}</span>
         <button

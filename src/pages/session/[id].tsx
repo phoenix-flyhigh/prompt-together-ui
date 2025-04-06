@@ -19,6 +19,12 @@ export type TMessage =
       byUser: false;
     };
 
+type Toast = {
+  id: number;
+  message: string;
+  type: "INFO";
+};
+
 export default function Session({ sessionId }: { sessionId?: string }) {
   const router = useRouter();
   const { id } = router.query as QueryParams;
@@ -43,6 +49,8 @@ export default function Session({ sessionId }: { sessionId?: string }) {
   const [messages, setMessages] = useState<TMessage[]>([]);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
 
+  const [notifications, setNotifications] = useState<Toast[]>([]);
+
   const dropdownRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
@@ -50,6 +58,23 @@ export default function Session({ sessionId }: { sessionId?: string }) {
       dialogRef.current?.showModal();
     }
   }, [username]);
+
+  const addNotification = (message: string) => {
+    const notificationId = Date.now();
+    setNotifications((prev) => [
+      {
+        id: notificationId,
+        message,
+        type: "INFO",
+      },
+      ...prev,
+    ]);
+    setTimeout(() => {
+      setNotifications((prev) =>
+        prev.filter(({ id }) => id !== notificationId)
+      );
+    }, 3000);
+  };
 
   const handleDialogSubmit = (input: string) => {
     setFailedToJoinMessage("");
@@ -163,9 +188,12 @@ export default function Session({ sessionId }: { sessionId?: string }) {
     });
 
     socket.on("user joined", ({ username, members }) => {
-      console.log("New user has joined", username);
-
+      addNotification(`${username} has joined`);
       setAllUsers(members);
+    });
+
+    socket.on("user left", (username) => {
+      addNotification(`${username} has left`);
     });
 
     socket.on("disconnect", () => {
@@ -190,6 +218,7 @@ export default function Session({ sessionId }: { sessionId?: string }) {
       socket.off("new message");
       socket.off("typing");
       socket.off("user joined");
+      socket.off("user left");
       document.removeEventListener("click", outsideClickHandler);
     };
   }, [setUsername, showDropdown]);
@@ -213,7 +242,7 @@ export default function Session({ sessionId }: { sessionId?: string }) {
   }
 
   return (
-    <div className="flex w-full justify-center flex-col gap-4">
+    <div className="relative flex w-full justify-start flex-col gap-4 h-screen">
       <section className="relative flex justify-between p-4">
         <p className="text-xl font-bold">{collabName}</p>
         <button
@@ -307,6 +336,16 @@ export default function Session({ sessionId }: { sessionId?: string }) {
           {error && <p>Failed to get AI response, Please try again!</p>}
         </div>
       </div>
+
+      {notifications.length > 0 && (
+        <div className="absolute bottom-12 right-12 gap-2 flex flex-col">
+          {notifications.map(({ id, message }: Toast) => (
+            <div key={id} role="alert" className="p-4 rounded-md bg-slate-700">
+              {message}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
