@@ -149,16 +149,18 @@ export default function Session({ sessionId }: { sessionId?: string }) {
 
     setAskingAI(false);
   };
-  console.log(!messages.length && askingAI);
 
   const handleSubmit = async () => {
+    const message = inputText.trim();
+    if (!message) return;
+
     setError(false);
 
     setFailedToSendMessage(false);
     socket.emit(
       "add message",
       {
-        message: inputText,
+        message,
         byUser: true,
         collabId,
         username,
@@ -166,10 +168,7 @@ export default function Session({ sessionId }: { sessionId?: string }) {
       ({ success }: { success: boolean }) => {
         if (success) {
           setInputText("");
-          setMessages((prev) => [
-            ...prev,
-            { message: inputText, byUser: true, username },
-          ]);
+          setMessages((prev) => [...prev, { message, byUser: true, username }]);
         } else {
           setFailedToSendMessage(true);
         }
@@ -243,8 +242,8 @@ export default function Session({ sessionId }: { sessionId?: string }) {
   }
 
   return (
-    <div className="relative flex w-full justify-start flex-col gap-4 h-screen">
-      <section className="relative flex justify-between p-4">
+    <div className="relative flex w-full justify-start items-center flex-col gap-4 h-screen">
+      <section className="relative flex justify-between p-4 w-full">
         <p className="text-xl font-bold">{collabName}</p>
         <button
           onClick={(e) => {
@@ -301,15 +300,25 @@ export default function Session({ sessionId }: { sessionId?: string }) {
               onBlur={() =>
                 socket.emit("stopped typing", { username, collabId })
               }
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  if (inputText.trim()) {
+                    handleSubmit();
+                  }
+                }
+              }}
             />
             <button
               className={`absolute right-3 bottom-8 text-white ${
                 !inputText ? "" : "cursor-pointer"
               }`}
               type="submit"
-              disabled={!inputText}
+              disabled={!inputText.trim()}
             >
-              <MdSend className={`${!inputText ? "text-slate-500" : ""}`} />
+              <MdSend
+                className={`${!inputText.trim() ? "text-slate-500" : ""}`}
+              />
             </button>
             <p className="text-xs text-slate-400 justify-self-end">
               Enter key sends the message
