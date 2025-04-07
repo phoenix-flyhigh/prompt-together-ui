@@ -1,8 +1,17 @@
 import { TMessage } from "@/pages/session/[id]";
+import { useEffect, useState } from "react";
 import { MdContentCopy } from "react-icons/md";
 
 export const MessageBox = (props: TMessage) => {
   const { message, byUser } = props;
+
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (copied) {
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }, [copied]);
 
   return (
     <div
@@ -23,9 +32,12 @@ export const MessageBox = (props: TMessage) => {
             <span className="text-slate-500">AI</span>
             <button
               className="items-center flex justify-center"
-              onClick={() => navigator.clipboard.writeText(message)}
+              onClick={() => {
+                navigator.clipboard.writeText(message)
+                setCopied(true)
+              }}
             >
-              <MdContentCopy />
+              {copied ? "Copied!" : <MdContentCopy />}
             </button>
           </div>
         )}
