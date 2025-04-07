@@ -1,8 +1,8 @@
 import { TMessage } from "@/pages/session/[id]";
+import { MdContentCopy } from "react-icons/md";
 
 export const MessageBox = (props: TMessage) => {
   const { message, byUser } = props;
-  console.log(props);
 
   return (
     <div
@@ -16,8 +16,19 @@ export const MessageBox = (props: TMessage) => {
       <p
         className={`text-lg bg-slate-800 border-2 border-slate-500 rounded-lg p-2 ${
           byUser ? "max-w-4xl" : ""
-        }`}
+        } flex flex-col gap-1`}
       >
+        {!byUser && (
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-slate-500">AI</span>
+            <button
+              className="items-center flex justify-center"
+              onClick={() => navigator.clipboard.writeText(message)}
+            >
+              <MdContentCopy />
+            </button>
+          </div>
+        )}
         {message}
       </p>
     </div>

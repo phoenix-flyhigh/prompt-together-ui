@@ -5,6 +5,7 @@ import type { GetServerSideProps } from "next/types";
 import { InputDialog } from "@/components/InputDialog";
 import { useCollab } from "@/hooks/useCollabContext";
 import { MessageBox } from "@/components/MessageBox";
+import { MdSend } from "react-icons/md";
 
 type QueryParams = { id: string };
 
@@ -302,13 +303,17 @@ export default function Session({ sessionId }: { sessionId?: string }) {
               }
             />
             <button
-              className="absolute right-3 bottom-8 text-white"
+              className={`absolute right-3 bottom-8 text-white ${
+                !inputText ? "" : "cursor-pointer"
+              }`}
               type="submit"
               disabled={!inputText}
             >
-              Send
+              <MdSend className={`${!inputText ? "text-slate-500" : ""}`} />
             </button>
-            <p className="text-sm text-slate-400">Enter key sends the message</p>
+            <p className="text-xs text-slate-400 justify-self-end">
+              Enter key sends the message
+            </p>
           </form>
           {typingUsers.length > 0 && (
             <p className="text-sm font-semibold text-slate-400">
