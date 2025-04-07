@@ -5,7 +5,7 @@ import type { GetServerSideProps } from "next/types";
 import { InputDialog } from "@/components/InputDialog";
 import { useCollab } from "@/hooks/useCollabContext";
 import { MessageBox } from "@/components/MessageBox";
-import { MdSend } from "react-icons/md";
+import { MdSend, MdInfoOutline } from "react-icons/md";
 
 type QueryParams = { id: string };
 
@@ -355,7 +355,12 @@ export default function Session({ sessionId }: { sessionId?: string }) {
       {notifications.length > 0 && (
         <div className="absolute bottom-12 right-12 gap-2 flex flex-col">
           {notifications.map(({ id, message }: Toast) => (
-            <div key={id} role="alert" className="p-4 rounded-md bg-slate-700">
+            <div
+              key={id}
+              role="alert"
+              className="text-md p-4 rounded-md bg-slate-700 flex items-center gap-3"
+            >
+              <MdInfoOutline className="text-lg" />
               {message}
             </div>
           ))}
