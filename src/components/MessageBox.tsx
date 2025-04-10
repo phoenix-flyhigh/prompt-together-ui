@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { MdContentCopy } from "react-icons/md";
 import { useTheme } from "@/hooks/useTheme";
 import { TMessage } from "@/pages/session/[id]";
+import Markdown from "react-markdown";
 
 export const MessageBox = (props: TMessage) => {
   const { message, byUser } = props;
@@ -79,7 +80,23 @@ export const MessageBox = (props: TMessage) => {
             </button>
           </div>
         )}
-        <div className="whitespace-pre-wrap break-words">{message}</div>
+        <div className="break-words">
+          <Markdown
+            components={{
+              h1: ({ ...props }) => (
+                <h1 className="text-xl font-bold mb-2" {...props} />
+              ),
+              h2: ({ ...props }) => (
+                <h2 className="text-lg font-bold mb-2" {...props} />
+              ),
+              h3: ({ ...props }) => (
+                <h3 className="text-md font-bold mb-1" {...props} />
+              ),
+            }}
+          >
+            {message}
+          </Markdown>
+        </div>
       </div>
     </div>
   );

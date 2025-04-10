@@ -7,6 +7,7 @@ import { useCollab } from "@/hooks/useCollabContext";
 import { MessageBox } from "@/components/MessageBox";
 import { MdSend, MdInfoOutline, MdPeople } from "react-icons/md";
 import { useTheme } from "@/hooks/useTheme";
+import DOMPurify from 'dompurify';
 
 type QueryParams = { id: string };
 
@@ -86,7 +87,9 @@ export default function Session({ sessionId }: { sessionId?: string }) {
     }, 3000);
   };
 
-  const handleDialogSubmit = (input: string) => {
+  const handleDialogSubmit = (userInput: string) => {
+    const input = DOMPurify.sanitize(userInput)
+
     setFailedToJoinMessage("");
     setUsername(input);
     setIsLoading(true);
@@ -161,7 +164,9 @@ export default function Session({ sessionId }: { sessionId?: string }) {
   };
 
   const handleSubmit = async () => {
-    const message = inputText.trim();
+    const input = DOMPurify.sanitize(inputText)
+
+    const message = input.trim();
     if (!message) return;
 
     setError(false);
