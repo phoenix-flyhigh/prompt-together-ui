@@ -17,14 +17,14 @@ export default function Layout({ children }: LayoutProps) {
     <div
       className={`min-h-screen ${
         isDarkTheme ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"
-      } transition-colors duration-200`}
+      } transition-colors duration-200 flex flex-col`}
     >
       <header
         className={`sticky top-0 z-10 ${
           isDarkTheme ? "bg-gray-800" : "bg-white border-b border-gray-200"
         } py-4 px-6 md:px-10`}
       >
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
+        <div className="mx-auto flex justify-between items-center">
           <Link href="/" className="flex items-center">
             <h1
               className={`text-xl md:text-2xl font-bold ${
@@ -49,7 +49,7 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       </header>
 
-      <main>{children}</main>
+      <main className="flex flex-grow h-full">{children}</main>
     </div>
   );
 }

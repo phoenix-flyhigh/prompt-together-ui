@@ -5,7 +5,8 @@ import type { GetServerSideProps } from "next/types";
 import { InputDialog } from "@/components/InputDialog";
 import { useCollab } from "@/hooks/useCollabContext";
 import { MessageBox } from "@/components/MessageBox";
-import { MdSend, MdInfoOutline } from "react-icons/md";
+import { MdSend, MdInfoOutline, MdPeople } from "react-icons/md";
+import { useTheme } from "@/hooks/useTheme";
 
 type QueryParams = { id: string };
 
@@ -30,6 +31,9 @@ export default function Session({ sessionId }: { sessionId?: string }) {
   const router = useRouter();
   const { id } = router.query as QueryParams;
   const collabId = id ?? sessionId;
+  const { theme } = useTheme();
+
+  const isDarkTheme = theme === "dark";
 
   const {
     collabName,
@@ -53,6 +57,11 @@ export default function Session({ sessionId }: { sessionId?: string }) {
   const [notifications, setNotifications] = useState<Toast[]>([]);
 
   const dropdownRef = useRef<HTMLUListElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   useEffect(() => {
     if (!username) {
@@ -133,6 +142,7 @@ export default function Session({ sessionId }: { sessionId?: string }) {
 
     if (!data) {
       setError(true);
+      setAskingAI(false);
       return;
     }
 
@@ -238,48 +248,88 @@ export default function Session({ sessionId }: { sessionId?: string }) {
   }
 
   if (isLoading || !collabName) {
-    return <div>Loading</div>;
+    return (
+      <div className="flex items-center justify-center h-screen w-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
   }
 
   return (
-    <div className="relative flex w-full justify-start items-center flex-col gap-4 h-screen">
-      <section className="relative flex justify-between p-4 w-full">
-        <p className="text-xl font-bold">{collabName}</p>
+    <div
+      className={`relative flex w-full justify-start items-center flex-col flex-grow`}
+    >
+      <section
+        className={`relative flex justify-between items-center py-4 px-6 md:px-10 w-full ${
+          isDarkTheme
+            ? "bg-gray-900 border-b border-gray-700"
+            : "bg-gray-100 border-b border-gray-200"
+        } shadow-sm`}
+      >
+        <div className="flex-1" />
+        <h1 className="text-xl font-bold flex-1">{collabName}</h1>
         <button
           onClick={(e) => {
             e.stopPropagation();
             setShowDropdown((prev) => !prev);
           }}
+          className={`flex items-center gap-2 px-3 py-2 rounded-md ${
+            isDarkTheme
+              ? "bg-gray-700 hover:bg-gray-600"
+              : "bg-blue-100 hover:bg-blue-200"
+          } transition-colors justify-self-end`}
         >
-          Users
+          <MdPeople size={20} />
+          <span>Users ({allUsers.length})</span>
         </button>
         {showDropdown && (
           <ul
             aria-label="members"
-            className="absolute right-4 top-12"
+            className={`absolute right-4 top-16 z-10 rounded-md shadow-lg p-2 min-w-48 ${
+              isDarkTheme
+                ? "bg-gray-800 border border-gray-700"
+                : "bg-white border border-gray-200"
+            }`}
             ref={dropdownRef}
           >
             {allUsers.map((user) => (
-              <li key={user}>{user}</li>
+              <li
+                key={user}
+                className={`p-2 ${user === username ? "font-bold" : ""} ${
+                  isDarkTheme ? "hover:bg-gray-700" : "hover:bg-gray-100"
+                } rounded-md`}
+              >
+                {user === username ? `${user} (You)` : user}
+              </li>
             ))}
           </ul>
         )}
       </section>
-      <div className="flex flex-col gap-8 items-center justify-center w-full p-4 lg:w-3/4">
-        {messages.map((msg, i) =>
-          msg.byUser ? (
-            <MessageBox
-              key={i}
-              message={msg.message}
-              byUser={msg.byUser}
-              username={msg.username === username ? "You" : msg.username}
-            />
-          ) : (
-            <MessageBox key={i} message={msg.message} byUser={msg.byUser} />
-          )
-        )}
 
-        <div className="flex flex-col gap-2 items-start w-full">
+      <div className="flex flex-col w-full p-4 lg:w-3/4 overflow-y-auto flex-grow">
+        <div className="flex flex-col gap-8 pb-4">
+          {messages.map((msg, i) =>
+            msg.byUser ? (
+              <MessageBox
+                key={i}
+                message={msg.message}
+                byUser={msg.byUser}
+                username={msg.username === username ? "You" : msg.username}
+              />
+            ) : (
+              <MessageBox key={i} message={msg.message} byUser={msg.byUser} />
+            )
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      <div
+        className={`flex flex-col gap-3 w-full p-4 lg:w-3/4 ${
+          isDarkTheme ? "bg-gray-900" : "bg-gray-50"
+        } border-t ${isDarkTheme ? "border-gray-800" : "border-gray-200"}`}
+      >
+        <div className="flex flex-col gap-2 w-full">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -290,7 +340,11 @@ export default function Session({ sessionId }: { sessionId?: string }) {
             <textarea
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              className="w-full border-2 border-white p-4 text-md bg-slate-800 rounded-lg"
+              className={`w-full p-4 text-md rounded-lg border-2 ${
+                isDarkTheme
+                  ? "bg-gray-800 border-gray-700 text-white"
+                  : "bg-white border-gray-300 text-gray-900"
+              } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
               placeholder="Enter your prompt"
               rows={4}
               maxLength={700}
@@ -310,57 +364,85 @@ export default function Session({ sessionId }: { sessionId?: string }) {
               }}
             />
             <button
-              className={`absolute right-3 bottom-8 text-white ${
-                !inputText ? "" : "cursor-pointer"
+              className={`absolute right-4 bottom-4 p-2 rounded-full ${
+                !inputText.trim()
+                  ? "text-gray-400 cursor-not-allowed"
+                  : isDarkTheme
+                  ? "text-blue-400 hover:text-blue-300 cursor-pointer"
+                  : "text-blue-600 hover:text-blue-500 cursor-pointer"
               }`}
               type="submit"
               disabled={!inputText.trim()}
             >
-              <MdSend
-                className={`${!inputText.trim() ? "text-slate-500" : ""}`}
-              />
+              <MdSend size={24} />
             </button>
-            <p className="text-xs text-slate-400 justify-self-end">
-              Enter key sends the message
-            </p>
           </form>
-          {typingUsers.length > 0 && (
-            <p className="text-sm font-semibold text-slate-400">
-              {`${typingUsers.join(", ")} ${
-                typingUsers.length > 1 ? "" : "is"
-              } typing...`}
-            </p>
-          )}
+          <div className="flex justify-between items-center text-xs">
+            <span
+              className={`${isDarkTheme ? "text-gray-400" : "text-gray-500"}`}
+            >
+              Press Enter to send, Shift+Enter for new line
+            </span>
+            {typingUsers.length > 0 && (
+              <p
+                className={`text-sm font-medium ${
+                  isDarkTheme ? "text-blue-400" : "text-blue-600"
+                } animate-pulse`}
+              >
+                {`${typingUsers.join(", ")} ${
+                  typingUsers.length > 1 ? "are" : "is"
+                } typing...`}
+              </p>
+            )}
+          </div>
           {failedToSendMessage && (
-            <p>Failed to send message. Please try again!!</p>
+            <p className="text-red-500 text-sm">
+              Failed to send message. Please try again!
+            </p>
           )}
         </div>
 
-        <div className="flex flex-col gap-4 items-center">
+        <div className="flex flex-col items-center mt-2">
           <button
-            className={`border-2 ${
+            className={`px-4 py-2 rounded-md transition-colors ${
               !enableAI
-                ? "border-slate-600 text-slate-600"
-                : "border-white cursor-pointer"
-            } px-4 py-2 w-fit`}
+                ? `${
+                    isDarkTheme
+                      ? "bg-gray-800 text-gray-600"
+                      : "bg-gray-200 text-gray-400"
+                  } cursor-not-allowed`
+                : `${
+                    isDarkTheme
+                      ? "bg-blue-600 hover:bg-blue-700"
+                      : "bg-blue-500 hover:bg-blue-600"
+                  } text-white cursor-pointer`
+            }`}
             disabled={!enableAI}
             onClick={askAI}
           >
-            Ask AI
+            {askingAI ? "Thinking..." : "Ask AI"}
           </button>
-          {error && <p>Failed to get AI response, Please try again!</p>}
+          {error && (
+            <p className="text-red-500 mt-2">
+              Failed to get AI response. Please try again!
+            </p>
+          )}
         </div>
       </div>
 
       {notifications.length > 0 && (
-        <div className="absolute bottom-12 right-12 gap-2 flex flex-col">
+        <div className="fixed bottom-6 right-6 z-20 flex flex-col gap-2">
           {notifications.map(({ id, message }: Toast) => (
             <div
               key={id}
               role="alert"
-              className="text-md p-4 rounded-md bg-slate-700 flex items-center gap-3"
+              className={`p-3 rounded-md shadow-lg flex items-center gap-3 text-sm max-w-xs animate-fadeIn ${
+                isDarkTheme
+                  ? "bg-gray-800 text-white border border-gray-700"
+                  : "bg-white text-gray-800 border border-gray-200"
+              }`}
             >
-              <MdInfoOutline className="text-lg" />
+              <MdInfoOutline className="text-blue-500" size={20} />
               {message}
             </div>
           ))}
