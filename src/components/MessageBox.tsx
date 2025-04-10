@@ -14,7 +14,8 @@ export const MessageBox = (props: TMessage) => {
 
   useEffect(() => {
     if (copied) {
-      setTimeout(() => setCopied(false), 2000);
+      const timer = setTimeout(() => setCopied(false), 2000);
+      return () => clearTimeout(timer);
     }
   }, [copied]);
 
@@ -92,6 +93,19 @@ export const MessageBox = (props: TMessage) => {
               h3: ({ ...props }) => (
                 <h3 className="text-md font-bold mb-1" {...props} />
               ),
+              p: ({ ...props }) => (
+                <p
+                  className={`${message.length > 400 ? "mb-4" : ""} leading-relaxed`}
+                  {...props}
+                />
+              ),
+              ul: ({ ...props }) => (
+                <ul className="mb-4 ml-6 list-disc" {...props} />
+              ),
+              ol: ({ ...props }) => (
+                <ol className="mb-4 ml-6 list-decimal" {...props} />
+              ),
+              li: ({ ...props }) => <li className="mb-1" {...props} />,
             }}
           >
             {message}
