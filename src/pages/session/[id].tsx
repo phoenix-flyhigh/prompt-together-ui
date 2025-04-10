@@ -5,9 +5,9 @@ import type { GetServerSideProps } from "next/types";
 import { InputDialog } from "@/components/InputDialog";
 import { useCollab } from "@/hooks/useCollabContext";
 import { MessageBox } from "@/components/MessageBox";
-import { MdSend, MdInfoOutline, MdPeople } from "react-icons/md";
+import { MdSend, MdInfoOutline, MdPeople, MdShare } from "react-icons/md";
 import { useTheme } from "@/hooks/useTheme";
-import DOMPurify from 'dompurify';
+import DOMPurify from "dompurify";
 
 type QueryParams = { id: string };
 
@@ -88,7 +88,7 @@ export default function Session({ sessionId }: { sessionId?: string }) {
   };
 
   const handleDialogSubmit = (userInput: string) => {
-    const input = DOMPurify.sanitize(userInput)
+    const input = DOMPurify.sanitize(userInput);
 
     setFailedToJoinMessage("");
     setUsername(input);
@@ -164,7 +164,7 @@ export default function Session({ sessionId }: { sessionId?: string }) {
   };
 
   const handleSubmit = async () => {
-    const input = DOMPurify.sanitize(inputText)
+    const input = DOMPurify.sanitize(inputText);
 
     const message = input.trim();
     if (!message) return;
@@ -189,6 +189,20 @@ export default function Session({ sessionId }: { sessionId?: string }) {
         }
       }
     );
+  };
+
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (copied) {
+      const timer = setTimeout(() => setCopied(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [copied]);
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(collabId);
+    setCopied(true);
   };
 
   useEffect(() => {
@@ -273,20 +287,35 @@ export default function Session({ sessionId }: { sessionId?: string }) {
       >
         <div className="flex-1" />
         <h1 className="text-xl font-bold flex-1">{collabName}</h1>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowDropdown((prev) => !prev);
-          }}
-          className={`flex items-center gap-2 px-3 py-2 rounded-md ${
-            isDarkTheme
-              ? "bg-gray-700 hover:bg-gray-600"
-              : "bg-blue-100 hover:bg-blue-200"
-          } transition-colors justify-self-end`}
-        >
-          <MdPeople size={20} />
-          <span>Users ({allUsers.length})</span>
-        </button>
+
+        <div className="flex gap-2 justify-self-end">
+          <button
+            onClick={handleShare}
+            className={`flex items-center gap-2 px-3 py-2 rounded-md ${
+              isDarkTheme
+                ? "bg-blue-800 hover:bg-blue-700"
+                : "bg-blue-100 hover:bg-blue-200"
+            } transition-colors`}
+            title="Copy session ID to clipboard"
+          >
+            <MdShare size={20} />
+            <span>{copied ? "Copied!" : "Share"}</span>
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowDropdown((prev) => !prev);
+            }}
+            className={`flex items-center gap-2 px-3 py-2 rounded-md ${
+              isDarkTheme
+                ? "bg-blue-800 hover:bg-blue-700"
+                : "bg-blue-100 hover:bg-blue-200"
+            } transition-colors justify-self-end`}
+          >
+            <MdPeople size={20} />
+            <span>Users ({allUsers.length})</span>
+          </button>
+        </div>
         {showDropdown && (
           <ul
             aria-label="members"
@@ -294,15 +323,13 @@ export default function Session({ sessionId }: { sessionId?: string }) {
               isDarkTheme
                 ? "bg-gray-800 border border-gray-700"
                 : "bg-white border border-gray-200"
-            }`}
+            } divide-y divide-gray-300`}
             ref={dropdownRef}
           >
             {allUsers.map((user) => (
               <li
                 key={user}
-                className={`p-2 ${user === username ? "font-bold" : ""} ${
-                  isDarkTheme ? "hover:bg-gray-700" : "hover:bg-gray-100"
-                } rounded-md`}
+                className={`p-2 ${user === username ? "font-bold" : ""}`}
               >
                 {user === username ? `${user} (You)` : user}
               </li>
