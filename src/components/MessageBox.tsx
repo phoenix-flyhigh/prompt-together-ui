@@ -19,11 +19,26 @@ export const MessageBox = (props: TMessage) => {
     }
   }, [copied]);
 
+  const [visibleText, setVisibleText] = useState("");
+
+  useEffect(() => {
+    if (byUser) return;
+
+    let index = 0;
+    const interval = setInterval(() => {
+      setVisibleText((prev) => prev + message.slice(index, index + 5));
+      index += 5;
+      if (index >= message.length) clearInterval(interval);
+    }, 15);
+
+    return () => clearInterval(interval);
+  }, [message, byUser]);
+
   return (
     <div
       className={`flex flex-col gap-2 w-full ${
         byUser ? "items-end" : "items-start"
-      }`}
+      } transition-all duration-200 ease-out transform opacity-0 scale-95 animate-fade-in`}
     >
       {byUser && (
         <p
@@ -95,7 +110,9 @@ export const MessageBox = (props: TMessage) => {
               ),
               p: ({ ...props }) => (
                 <p
-                  className={`${message.length > 400 ? "mb-4" : ""} leading-relaxed`}
+                  className={`${
+                    message.length > 400 ? "mb-4" : ""
+                  } leading-relaxed`}
                   {...props}
                 />
               ),
@@ -108,7 +125,7 @@ export const MessageBox = (props: TMessage) => {
               li: ({ ...props }) => <li className="mb-1" {...props} />,
             }}
           >
-            {message}
+            {byUser ? message : visibleText}
           </Markdown>
         </div>
       </div>
