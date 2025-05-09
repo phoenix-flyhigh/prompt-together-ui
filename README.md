@@ -1,14 +1,29 @@
+# Overview
+
+Prompt Together is a POC project for collaborative prompting. It tries to have AI as part of a chat group and users and collaboratively come up with prompts and then ask AI tools 
+
+## Tech stack
+
+- Frontend built using <b> Next JS and typescript </b>
+- Gemini as <b> AI tool</b> 
+- Backend built using <b>NodeJS, typescript, express, socket.io</b>
+- Database used is <b>redis</b>
+
 # Steps to setup this project
 
 ## UI
 
- - Get Gemini API key
- https://ai.google.dev/gemini-api/docs/quickstart?lang=node
+ - [`Get Gemini API key`](https://ai.google.dev/gemini-api/docs/quickstart?lang=node)
 
- - Add it to .env file 
+ - Add below keys to .env file 
     ```
     NEXT_PUBLIC_GEMINI_API_KEY=<your API key>
+    NEXT_PUBLIC_API_URL=<your backend url>
     ```
+
+## Backend
+
+[`Backend repo URL`](https://github.com/phoenix-flyhigh/prompt-together-server)
 
 # Next JS
 
