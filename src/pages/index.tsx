@@ -37,7 +37,7 @@ export default function Home() {
 
   return (
     <div className="w-full">
-      <section className="flex flex-col gap-8 justify-center items-center min-h-screen py-16 px-4">
+      <section className="relative flex flex-col gap-8 justify-center items-center min-h-screen py-16 px-4">
         <div className="max-w-2xl text-center mb-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
             Collaborate on AI Prompts in Real-Time
