@@ -275,11 +275,9 @@ export default function Session({ sessionId }: { sessionId?: string }) {
   }
 
   return (
-    <div
-      className={`relative flex w-full justify-start items-center flex-col flex-grow`}
-    >
+    <div className={`relative flex w-full justify-start items-center flex-col`}>
       <section
-        className={`relative flex justify-between items-center py-4 px-6 md:px-10 w-full ${
+        className={`z-10 fixed top-[72px] flex justify-between items-center py-4 px-6 md:px-10 w-full ${
           isDarkTheme
             ? "bg-gray-900 border-b border-gray-700"
             : "bg-gray-100 border-b border-gray-200"
@@ -338,7 +336,7 @@ export default function Session({ sessionId }: { sessionId?: string }) {
         )}
       </section>
 
-      <div className="flex flex-col w-full p-4 lg:w-3/4 overflow-y-auto flex-grow">
+      <div className="flex flex-col w-full mt-36 mb-64 lg:w-3/4 flex-grow">
         <div className="flex flex-col gap-8 pb-4">
           {messages.map((msg, i) =>
             msg.byUser ? (
@@ -357,11 +355,11 @@ export default function Session({ sessionId }: { sessionId?: string }) {
       </div>
 
       <div
-        className={`flex flex-col gap-3 w-full p-4 lg:w-3/4 ${
+        className={`fixed bottom-0 flex flex-col gap-3 w-full p-4 items-center ${
           isDarkTheme ? "bg-gray-900" : "bg-gray-50"
-        } border-t ${isDarkTheme ? "border-gray-800" : "border-gray-200"}`}
+        }`}
       >
-        <div className="flex flex-col gap-2 w-full">
+        <div className="flex flex-col gap-2 w-full lg:w-3/4">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -405,6 +403,7 @@ export default function Session({ sessionId }: { sessionId?: string }) {
               }`}
               type="submit"
               disabled={!inputText.trim()}
+              title="Send message"
             >
               <MdSend size={24} />
             </button>

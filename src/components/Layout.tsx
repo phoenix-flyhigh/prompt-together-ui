@@ -15,14 +15,14 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div
-      className={`min-h-screen ${
+      className={`relative min-h-screen ${
         isDarkTheme ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"
       } transition-colors duration-200 flex flex-col`}
     >
       <header
-        className={`sticky top-0 z-10 ${
+        className={`fixed top-0 z-10 ${
           isDarkTheme ? "bg-gray-800" : "bg-white border-b border-gray-200"
-        } py-4 px-6 md:px-10`}
+        } py-4 px-6 md:px-10 w-full`}
       >
         <div className="mx-auto flex justify-between items-center">
           <Link href="/" className="flex items-center">
@@ -49,7 +49,7 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       </header>
 
-      <main className="flex flex-grow h-full">{children}</main>
+      <main className="flex overflow-y-auto">{children}</main>
     </div>
   );
 }
