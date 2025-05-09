@@ -128,37 +128,41 @@ export default function Session({ sessionId }: { sessionId?: string }) {
   const askAI = async () => {
     setError(false);
     setAskingAI(true);
+    
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: messages.reduce(
+            (acc, msg) => (msg.byUser ? (acc += ` ${msg.message}`) : acc),
+            ""
+          ),
+        }),
+      });
 
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        prompt: messages.reduce(
-          (acc, msg) => (msg.byUser ? (acc += ` ${msg.message}`) : acc),
-          ""
-        ),
-      }),
-    });
+      const data = await res.json();
+      console.log("received", data);
 
-    const data = await res.json();
-    console.log("received", data);
+      if (!data || res.status >= 400) {
+        setError(true);
+        setAskingAI(false);
+        return;
+      }
 
-    if (!data) {
+      socket.emit(
+        "add message",
+        {
+          message: data.response,
+          byUser: false,
+          collabId,
+          username: "AI",
+        },
+        () => {}
+      );
+    } catch {
       setError(true);
-      setAskingAI(false);
-      return;
     }
-
-    socket.emit(
-      "add message",
-      {
-        message: data.response,
-        byUser: false,
-        collabId,
-        username: "AI",
-      },
-      () => {}
-    );
 
     setAskingAI(false);
   };

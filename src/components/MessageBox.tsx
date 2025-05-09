@@ -22,7 +22,7 @@ export const MessageBox = (props: TMessage) => {
   const [visibleText, setVisibleText] = useState("");
 
   useEffect(() => {
-    if (byUser) return;
+    if (byUser || !message) return;
 
     let index = 0;
     const interval = setInterval(() => {
