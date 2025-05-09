@@ -10,7 +10,7 @@ export const socket = io(process.env.NEXT_PUBLIC_API_URL);
 export default function Home() {
   const router = useRouter();
 
-  const { setCollabName, failedToJoinMessage } = useCollab();
+  const { setCollabName, failedToJoinMessage, setUsername } = useCollab();
 
   const [sessionId, setSessionId] = useState("");
   const [creationErrorMessage, setCreationErrorMessage] = useState("");
@@ -25,6 +25,7 @@ export default function Home() {
   type ErrorResponse = { success: false; message: string };
 
   const createSession = () => {
+    setUsername("");
     socket.emit("create room", (props: SuccessResponse | ErrorResponse) => {
       if (props.success) {
         setCollabName(props.name);
@@ -160,7 +161,7 @@ export default function Home() {
             <video
               controls
               className="w-full h-full object-cover"
-              poster="/assets/demo-poster.jpg"
+              poster="/assets/demo-poster.png"
               preload="metadata"
             >
               <source src="/assets/demo-video.mov" type="video/mp4" />
