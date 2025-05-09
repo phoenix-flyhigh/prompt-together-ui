@@ -5,9 +5,10 @@ import type { GetServerSideProps } from "next/types";
 import { InputDialog } from "@/components/InputDialog";
 import { useCollab } from "@/hooks/useCollabContext";
 import { MessageBox } from "@/components/MessageBox";
-import { MdSend, MdInfoOutline, MdPeople, MdShare } from "react-icons/md";
+import { MdSend, MdInfoOutline } from "react-icons/md";
 import { useTheme } from "@/hooks/useTheme";
 import DOMPurify from "dompurify";
+import SessionHeader from "@/components/SessionHeader";
 
 type QueryParams = { id: string };
 
@@ -48,7 +49,6 @@ export default function Session({ sessionId }: { sessionId?: string }) {
   const [error, setError] = useState(false);
   const [failedToSendMessage, setFailedToSendMessage] = useState(false);
   const [askingAI, setAskingAI] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
   const [allUsers, setAllUsers] = useState<string[]>([]);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [inputText, setInputText] = useState("");
@@ -57,7 +57,6 @@ export default function Session({ sessionId }: { sessionId?: string }) {
 
   const [notifications, setNotifications] = useState<Toast[]>([]);
 
-  const dropdownRef = useRef<HTMLUListElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -87,7 +86,7 @@ export default function Session({ sessionId }: { sessionId?: string }) {
     }, 3000);
   };
 
-  const handleDialogSubmit = (userInput: string) => {
+  const joinSession = (userInput: string) => {
     const input = DOMPurify.sanitize(userInput);
 
     setFailedToJoinMessage("");
@@ -116,7 +115,6 @@ export default function Session({ sessionId }: { sessionId?: string }) {
           setIsLoading(false);
           setAllUsers(members);
         } else {
-          console.log(message);
           setFailedToJoinMessage(message);
           setUsername("");
           router.replace("/");
@@ -142,7 +140,6 @@ export default function Session({ sessionId }: { sessionId?: string }) {
       });
 
       const data = await res.json();
-      console.log("received", data);
 
       if (!data || res.status >= 400) {
         setError(true);
@@ -195,20 +192,6 @@ export default function Session({ sessionId }: { sessionId?: string }) {
     );
   };
 
-  const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (copied) {
-      const timer = setTimeout(() => setCopied(false), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [copied]);
-
-  const handleShare = () => {
-    navigator.clipboard.writeText(collabId);
-    setCopied(true);
-  };
-
   useEffect(() => {
     socket.on("new message", ({ message, byUser, username }) => {
       setMessages((prev: TMessage[]) => [
@@ -234,27 +217,13 @@ export default function Session({ sessionId }: { sessionId?: string }) {
       router.push("/");
     });
 
-    const outsideClickHandler = (e: MouseEvent) => {
-      if (!showDropdown) return;
-
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setShowDropdown(false);
-      }
-    };
-
-    document.addEventListener("click", outsideClickHandler);
-
     return () => {
       socket.off("new message");
       socket.off("typing");
       socket.off("user joined");
       socket.off("user left");
-      document.removeEventListener("click", outsideClickHandler);
     };
-  }, [setUsername, showDropdown]);
+  }, []);
 
   const enableAI = messages.length && !askingAI;
 
@@ -262,7 +231,7 @@ export default function Session({ sessionId }: { sessionId?: string }) {
     return (
       <InputDialog
         title="Join collab as"
-        onSubmit={handleDialogSubmit}
+        onSubmit={joinSession}
         inputPlaceholderText="Enter your name"
         suggestion="Min length: 3"
         ref={dialogRef}
@@ -280,65 +249,8 @@ export default function Session({ sessionId }: { sessionId?: string }) {
 
   return (
     <div className={`relative flex w-full justify-start items-center flex-col`}>
-      <section
-        className={`z-10 fixed top-[72px] flex justify-between items-center py-4 px-6 md:px-10 w-full ${
-          isDarkTheme
-            ? "bg-gray-900 border-b border-gray-700"
-            : "bg-gray-100 border-b border-gray-200"
-        } shadow-sm`}
-      >
-        <div className="flex-1" />
-        <h1 className="text-xl font-bold flex-1">{collabName}</h1>
 
-        <div className="flex gap-2 justify-self-end">
-          <button
-            onClick={handleShare}
-            className={`flex items-center gap-2 px-3 py-2 rounded-md ${
-              isDarkTheme
-                ? "bg-blue-800 hover:bg-blue-700"
-                : "bg-blue-100 hover:bg-blue-200"
-            } transition-colors`}
-            title="Copy session ID to clipboard"
-          >
-            <MdShare size={20} />
-            <span>{copied ? "Copied!" : "Share"}</span>
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowDropdown((prev) => !prev);
-            }}
-            className={`flex items-center gap-2 px-3 py-2 rounded-md ${
-              isDarkTheme
-                ? "bg-blue-800 hover:bg-blue-700"
-                : "bg-blue-100 hover:bg-blue-200"
-            } transition-colors justify-self-end`}
-          >
-            <MdPeople size={20} />
-            <span>Users ({allUsers.length})</span>
-          </button>
-        </div>
-        {showDropdown && (
-          <ul
-            aria-label="members"
-            className={`absolute right-4 top-16 z-10 rounded-md shadow-lg p-2 min-w-48 ${
-              isDarkTheme
-                ? "bg-gray-800 border border-gray-700"
-                : "bg-white border border-gray-200"
-            } divide-y divide-gray-300`}
-            ref={dropdownRef}
-          >
-            {allUsers.map((user) => (
-              <li
-                key={user}
-                className={`p-2 ${user === username ? "font-bold" : ""}`}
-              >
-                {user === username ? `${user} (You)` : user}
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <SessionHeader collabId={collabId} allUsers={allUsers}/>
 
       <div className="flex flex-col w-full mt-36 mb-64 lg:w-3/4 flex-grow">
         <div className="flex flex-col gap-8 pb-4">
