@@ -193,6 +193,8 @@ export default function Session({ sessionId }: { sessionId?: string }) {
   };
 
   useEffect(() => {
+    socket.connect()
+    
     socket.on("new message", ({ message, byUser, username }) => {
       setMessages((prev: TMessage[]) => [
         ...prev,
