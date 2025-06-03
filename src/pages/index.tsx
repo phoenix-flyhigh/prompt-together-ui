@@ -1,11 +1,15 @@
 import { useCollab } from "@/hooks/useCollabContext";
 import { useRouter } from "next/router";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import { useTheme } from "@/hooks/useTheme";
 import { MdOutlineKeyboardDoubleArrowDown } from "react-icons/md";
 
-export const socket = io(process.env.NEXT_PUBLIC_API_URL);
+export const socket = io(process.env.NEXT_PUBLIC_API_URL, {
+  reconnectionAttempts: 3,
+  reconnectionDelay: 1000,
+  autoConnect: false,
+});
 
 export default function Home() {
   const router = useRouter();
@@ -15,6 +19,8 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState("");
   const [creationErrorMessage, setCreationErrorMessage] = useState("");
+  const [connectionError, setConnectionError] = useState("");
+
   const { theme } = useTheme();
 
   const joinSession = (e: FormEvent<HTMLFormElement>) => {
@@ -40,6 +46,26 @@ export default function Home() {
     });
   };
 
+  useEffect(() => {
+    setConnectionError("");
+    socket.connect();
+
+    socket.on("connect_error", () => {
+      setConnectionError(
+        "Unable to connect to server. Please try again later."
+      );
+    });
+
+    socket.on("reconnect_failed", () => {
+      setConnectionError("Connection to server failed.");
+    });
+
+    return () => {
+      socket.removeAllListeners();
+      socket.disconnect();
+    };
+  }, []);
+
   return (
     <div className="w-full">
       <section className="relative flex flex-col gap-8 justify-center items-center min-h-screen py-16 px-4">
@@ -54,6 +80,8 @@ export default function Home() {
         </div>
 
         <div className="w-full max-w-md flex flex-col gap-8 items-center">
+          {connectionError && <p className="text-red-500">{connectionError}</p>}
+
           <section className="w-full flex flex-col gap-2 items-center">
             <button
               className="w-full py-4 px-6 flex justify-center rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200 font-medium text-lg"
