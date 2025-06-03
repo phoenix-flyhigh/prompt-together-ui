@@ -31,12 +31,13 @@ export default function Home() {
     socket.emit("create room", (props: SuccessResponse | ErrorResponse) => {
       if (props.success) {
         setCollabName(props.name);
+        setLoading(false);
         router.push(`/session/${props.collabId}`);
       } else {
         setCreationErrorMessage(props.message);
+        setLoading(false);
       }
     });
-    setLoading(false);
   };
 
   return (
