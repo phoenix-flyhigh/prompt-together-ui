@@ -12,6 +12,7 @@ export default function Home() {
 
   const { setCollabName, failedToJoinMessage, setUsername } = useCollab();
 
+  const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState("");
   const [creationErrorMessage, setCreationErrorMessage] = useState("");
   const { theme } = useTheme();
@@ -25,6 +26,7 @@ export default function Home() {
   type ErrorResponse = { success: false; message: string };
 
   const createSession = () => {
+    setLoading(true);
     setUsername("");
     socket.emit("create room", (props: SuccessResponse | ErrorResponse) => {
       if (props.success) {
@@ -34,6 +36,7 @@ export default function Home() {
         setCreationErrorMessage(props.message);
       }
     });
+    setLoading(false);
   };
 
   return (
@@ -52,10 +55,39 @@ export default function Home() {
         <div className="w-full max-w-md flex flex-col gap-8 items-center">
           <section className="w-full flex flex-col gap-2 items-center">
             <button
-              className="w-full py-4 px-6 rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200 font-medium text-lg"
+              className="w-full py-4 px-6 flex justify-center rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200 font-medium text-lg"
               onClick={createSession}
             >
-              Create Session
+              {loading ? (
+                <svg
+                  className="animate-spin h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <circle
+                    className="opacity-75"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    strokeDasharray="80"
+                    strokeDashoffset="60"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              ) : (
+                "Create Session"
+              )}
             </button>
             {creationErrorMessage && (
               <p className="text-red-500">{creationErrorMessage}</p>

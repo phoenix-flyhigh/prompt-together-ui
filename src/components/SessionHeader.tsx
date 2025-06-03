@@ -72,7 +72,7 @@ const SessionHeader = ({
           title="Copy session ID to clipboard"
         >
           <MdShare size={20} />
-          <span>{copied ? "Copied!" : "Share"}</span>
+          <span>{copied ? "Copied!" : "Share session ID"}</span>
         </button>
         <button
           onClick={(e) => {
