@@ -37,32 +37,38 @@ export default function Home() {
     socket.emit("create room", (props: SuccessResponse | ErrorResponse) => {
       if (props.success) {
         setCollabName(props.name);
-        setLoading(false);
         router.push(`/session/${props.collabId}`);
       } else {
         setCreationErrorMessage(props.message);
-        setLoading(false);
       }
+      setLoading(false);
     });
   };
 
   useEffect(() => {
     setConnectionError("");
     socket.connect();
+    const socketCleanUp = () => {
+      socket.removeAllListeners();
+      socket.disconnect();
+    };
 
     socket.on("connect_error", () => {
       setConnectionError(
         "Unable to connect to server. Please try again later."
       );
+      socketCleanUp();
+      if(loading) setLoading(false)
     });
 
     socket.on("reconnect_failed", () => {
       setConnectionError("Connection to server failed.");
+      socketCleanUp();
+      if(loading) setLoading(false)
     });
 
     return () => {
-      socket.removeAllListeners();
-      socket.disconnect();
+      socketCleanUp();
     };
   }, []);
 
