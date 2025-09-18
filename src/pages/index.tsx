@@ -58,13 +58,13 @@ export default function Home() {
         "Unable to connect to server. Please try again later."
       );
       socketCleanUp();
-      if(loading) setLoading(false)
+      if (loading) setLoading(false);
     });
 
     socket.on("reconnect_failed", () => {
       setConnectionError("Connection to server failed.");
       socketCleanUp();
-      if(loading) setLoading(false)
+      if (loading) setLoading(false);
     });
 
     return () => {
@@ -152,11 +152,11 @@ export default function Home() {
                 onChange={(e) => setSessionId(e.target.value.trim())}
               />
               <button
-                className={`py-4 px-6 rounded-lg sm:whitespace-nowrap ${
+                className={`py-2 px-4 sm:py-4 sm:px-6 rounded-lg sm:whitespace-nowrap ${
                   !sessionId
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
-                } transition-colors duration-200 font-medium text-lg`}
+                } transition-colors duration-200 font-medium text-base sm:text-lg`}
                 type="submit"
                 disabled={!sessionId}
               >
