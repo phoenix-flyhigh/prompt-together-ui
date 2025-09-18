@@ -255,7 +255,7 @@ export default function Session({ sessionId }: { sessionId?: string }) {
       <SessionHeader collabId={collabId} allUsers={allUsers}/>
 
       <div className="flex flex-col w-full mt-36 mb-64 lg:w-3/4 flex-grow">
-        <div className="flex flex-col gap-8 pb-4">
+        <div className="flex flex-col gap-8 pb-4 px-4">
           {messages.map((msg, i) =>
             msg.byUser ? (
               <MessageBox
