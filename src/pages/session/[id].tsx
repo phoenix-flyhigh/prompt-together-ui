@@ -94,8 +94,8 @@ export default function Session({ sessionId }: { sessionId?: string }) {
     setIsLoading(true);
 
     socket.emit(
-      "join room",
-      { roomId: collabId, username: input },
+      "join collab",
+      { collabId, username: input },
       ({
         success,
         message,

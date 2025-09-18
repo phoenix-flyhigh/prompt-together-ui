@@ -34,7 +34,7 @@ export default function Home() {
   const createSession = () => {
     setLoading(true);
     setUsername("");
-    socket.emit("create room", (props: SuccessResponse | ErrorResponse) => {
+    socket.emit("create collab", (props: SuccessResponse | ErrorResponse) => {
       if (props.success) {
         setCollabName(props.name);
         router.push(`/session/${props.collabId}`);
